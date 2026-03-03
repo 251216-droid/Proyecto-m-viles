@@ -26,5 +26,11 @@ data class Enfermedad(
     val idUsuarioFk: Int,
 
     @ColumnInfo(name = "nombre_enfermedad")
-    val nombreEnfermedad: String
+    val nombreEnfermedad: String,
+
+    @ColumnInfo(name = "fecha_diagnostico")
+    val fecha: String = "",
+
+    @ColumnInfo(name = "notas")
+    val notas: String = ""
 )

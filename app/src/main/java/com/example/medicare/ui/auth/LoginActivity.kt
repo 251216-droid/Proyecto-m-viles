@@ -163,7 +163,11 @@ fun LoginScreen(
                             placeholder = { Text("@gmail.com") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black
+                            )
                         )
                         
                         Spacer(modifier = Modifier.height(20.dp))
@@ -198,7 +202,11 @@ fun LoginScreen(
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black
+                            )
                         )
 
                         // mensaje de error si las credenciales son incorrectas

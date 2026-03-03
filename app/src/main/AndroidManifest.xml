@@ -48,6 +48,16 @@
             android:exported="false">
         </activity>
 
+        <activity
+            android:name=".ui.enfermedades.RegistrarEnfermedadActivity"
+            android:exported="false">
+        </activity>
+
+        <activity
+            android:name=".ui.enfermedades.EnfermedadesActivity"
+            android:exported="false">
+        </activity>
+
     </application>
 
 </manifest>
