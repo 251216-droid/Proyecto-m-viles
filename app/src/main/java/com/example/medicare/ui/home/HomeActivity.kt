@@ -6,14 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,64 +23,121 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import com.example.medicare.MedicareApp
 import com.example.medicare.R
+import com.example.medicare.data.local.dao.HistorialConNombre
+import com.example.medicare.data.local.dao.ProximaTomaConInfo
 import com.example.medicare.ui.enfermedades.EnfermedadesActivity
 import com.example.medicare.ui.enfermedades.RegistrarEnfermedadActivity
+import com.example.medicare.ui.medicamentos.MedicamentosActivity
+import com.example.medicare.ui.medicamentos.RegistrarMedicamentoActivity
+import com.example.medicare.ui.perfil.PerfilActivity
 import com.example.medicare.ui.theme.MediCareTheme
 
 class HomeActivity : ComponentActivity() {
 
+    private lateinit var viewModel: HomeViewModel
+    private var idUsuarioRecibido: Int = 1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val nombreRecibido = intent.getStringExtra("NOMBRE_USUARIO") ?: "Usuario"
+        val app = application as MedicareApp
+        viewModel = ViewModelProvider(
+            this,
+            HomeViewModelFactory(app.database.usuarioDao(), app.database.historialTomaDao())
+        )[HomeViewModel::class.java]
+
+        idUsuarioRecibido = intent.getIntExtra("ID_USUARIO", 1)
+        viewModel.cargarDatos(idUsuarioRecibido)
 
         setContent {
             MediCareTheme {
+                val usuario by viewModel.usuario.collectAsState()
+                val proximaToma by viewModel.proximaToma.collectAsState()
+                val historial by viewModel.historial.collectAsState()
+                
                 HomeScreen(
-                    nombreUsuario = nombreRecibido,
+                    nombreUsuario = usuario?.nombre ?: "Usuario",
+                    correoUsuario = usuario?.correo ?: "",
+                    idUsuario = idUsuarioRecibido,
+                    proximaToma = proximaToma,
+                    historial = historial,
+                    onConfirmarToma = { idToma -> viewModel.confirmarToma(idToma, idUsuarioRecibido) },
+                    onIrAHome = { },
                     onIrAEnfermedades = {
-                        startActivity(Intent(this, EnfermedadesActivity::class.java))
+                        val intent = Intent(this, EnfermedadesActivity::class.java).apply {
+                            putExtra("ID_USUARIO", idUsuarioRecibido)
+                        }
+                        startActivity(intent)
                     },
-                    onAgregarEnfermedad = {
-                        startActivity(Intent(this, RegistrarEnfermedadActivity::class.java))
+                    onIrAMedicamentos = {
+                        val intent = Intent(this, MedicamentosActivity::class.java).apply {
+                            putExtra("ID_USUARIO", idUsuarioRecibido)
+                        }
+                        startActivity(intent)
                     },
-                    onIrAMedicamentos = { }
+                    onIrARegistrarEnfermedad = {
+                        val intent = Intent(this, RegistrarEnfermedadActivity::class.java).apply {
+                            putExtra("ID_USUARIO", idUsuarioRecibido)
+                        }
+                        startActivity(intent)
+                    },
+                    onIrARegistrarMedicamento = {
+                        val intent = Intent(this, RegistrarMedicamentoActivity::class.java).apply {
+                            putExtra("ID_USUARIO", idUsuarioRecibido)
+                        }
+                        startActivity(intent)
+                    },
+                    onIrAPerfil = {
+                        val intent = Intent(this, PerfilActivity::class.java).apply {
+                            putExtra("ID_USUARIO", idUsuarioRecibido)
+                        }
+                        startActivity(intent)
+                    }
                 )
             }
         }
     }
-}
 
-data class HistorialItem(
-    val nombre: String,
-    val fecha: String,
-    val completado: Boolean
-)
+    override fun onResume() {
+        super.onResume()
+        viewModel.cargarDatos(idUsuarioRecibido)
+    }
+}
 
 @Composable
 fun HomeScreen(
     nombreUsuario: String,
+    correoUsuario: String,
+    idUsuario: Int,
+    proximaToma: ProximaTomaConInfo?,
+    historial: List<HistorialConNombre>,
+    onConfirmarToma: (Int) -> Unit,
+    onIrAHome: () -> Unit,
     onIrAEnfermedades: () -> Unit,
-    onAgregarEnfermedad: () -> Unit,
-    onIrAMedicamentos: () -> Unit
+    onIrAMedicamentos: () -> Unit,
+    onIrARegistrarEnfermedad: () -> Unit,
+    onIrARegistrarMedicamento: () -> Unit,
+    onIrAPerfil: () -> Unit
 ) {
     val azul = Color(0xFF0086FF)
     var menuExpandido by remember { mutableStateOf(false) }
 
-    val historial = listOf(
-        HistorialItem("Paracetamol", "Viernes, 20 de enero", true),
-        HistorialItem("Ibuprofeno", "Viernes, 20 de enero", false),
-        HistorialItem("Omeprazol", "Viernes, 20 de enero", true),
-        HistorialItem("Paracetamol", "Jueves, 19 de enero", true)
-    )
+    // Calcular iniciales
+    val iniciales = nombreUsuario
+        .split(" ")
+        .filter { it.isNotEmpty() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+        .joinToString("")
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-
         Column(modifier = Modifier.fillMaxSize()) {
 
             // ── Encabezado azul ──
@@ -92,10 +148,7 @@ fun HomeScreen(
                         brush = Brush.verticalGradient(
                             colors = listOf(Color(0xFF66B2FF), Color(0xFF0086FF))
                         ),
-                        shape = RoundedCornerShape(
-                            bottomStart = 40.dp,
-                            bottomEnd = 40.dp
-                        )
+                        shape = RoundedCornerShape(bottomStart = 40.dp, bottomEnd = 40.dp)
                     )
                     .padding(vertical = 40.dp, horizontal = 24.dp)
             ) {
@@ -117,12 +170,24 @@ fun HomeScreen(
                             color = Color.White.copy(alpha = 0.9f)
                         )
                     }
-                    IconButton(onClick = { }) {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(40.dp)
+
+                    // ── Avatar con iniciales ──
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .background(
+                                color = Color.White.copy(alpha = 0.3f),
+                                shape = CircleShape
+                            )
+                            .border(2.dp, Color.White, CircleShape)
+                            .clickable { onIrAPerfil() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = iniciales,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                     }
                 }
@@ -147,66 +212,66 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(
-                                    color = Color(0xFFE3F2FD),
+                                    Color(0xFFE3F2FD),
                                     shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
                                 )
                                 .padding(12.dp)
                         ) {
                             Text(
-                                text = "Próximas dosis",
+                                text = "Próxima dosis",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = azul
                             )
                         }
-
                         Column(modifier = Modifier.padding(20.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "Paracetamol",
-                                        fontSize = 19.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "Tipo: Tableta",
-                                        fontSize = 15.sp,
-                                        color = Color.Gray
-                                    )
-                                    Text(
-                                        text = "A las 11:30 A.M",
-                                        fontSize = 15.sp,
-                                        color = Color.Gray
-                                    )
+                            if (proximaToma != null) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text(text = proximaToma.nombre_med, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = "Tipo: ${proximaToma.tipo_presentacion}", fontSize = 15.sp, color = Color.Gray)
+                                        Text(text = "A las ${proximaToma.fecha_hora_programada}", fontSize = 15.sp, color = Color.Gray)
+                                    }
+                                    Text(text = proximaToma.dosis, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = azul)
                                 }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Button(
+                                        onClick = { onConfirmarToma(proximaToma.idToma) },
+                                        modifier = Modifier.weight(1f).height(45.dp),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFE8F5E9),
+                                            contentColor = Color(0xFF2E7D32)
+                                        )
+                                    ) {
+                                        Text(text = "Confirmar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                    }
+                                    Button(
+                                        onClick = { },
+                                        modifier = Modifier.weight(1f).height(45.dp),
+                                        shape = RoundedCornerShape(20.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFF7DADA),
+                                            contentColor = Color(0xFFEF4444)
+                                        )
+                                    ) {
+                                        Text(text = "Posponer", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                    }
+                                }
+                            } else {
                                 Text(
-                                    text = "500mg",
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = azul
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Button(
-                                onClick = { },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(45.dp),
-                                shape = RoundedCornerShape(20.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFF7DADA),
-                                    contentColor = Color(0xFFEF4444)
-                                )
-                            ) {
-                                Text(
-                                    text = "Posponer",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
+                                    text = "No hay tomas pendientes",
+                                    fontSize = 16.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                             }
                         }
@@ -216,50 +281,52 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // ── Historial ──
-                Text(
-                    text = "Historial",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = azul
-                )
-
+                Text(text = "Historial", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = azul)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(historial) { item ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(4.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                if (historial.isEmpty()) {
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Text(text = "Tu historial de tomas aparecerá aquí", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(historial) { item ->
+                            val cardColor = when (item.estado) {
+                                "Tomado" -> Color(0xFFE8F5E9) // Verde suave
+                                "Omitido" -> Color(0xFFF7DADA) // Rojo suave
+                                else -> Color.White
+                            }
+                            val iconColor = when (item.estado) {
+                                "Tomado" -> Color(0xFF2E7D32)
+                                "Omitido" -> Color(0xFFEF4444)
+                                else -> azul
+                            }
+
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                elevation = CardDefaults.cardElevation(4.dp),
+                                colors = CardDefaults.cardColors(containerColor = cardColor)
                             ) {
-                                Icon(
-                                    painter = if (item.completado)
-                                        painterResource(id = R.drawable.exitoso)
-                                    else
-                                        painterResource(id = R.drawable.no_exitoso),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(26.dp),
-                                    tint = Color.Unspecified
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = item.nombre,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        painter = when (item.estado) {
+                                            "Tomado" -> painterResource(id = R.drawable.exitoso)
+                                            "Pendiente" -> painterResource(id = R.drawable.medicamento)
+                                            else -> painterResource(id = R.drawable.no_exitoso)
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.size(26.dp),
+                                        tint = if (item.estado == "Pendiente") azul else Color.Unspecified
                                     )
-                                    Text(
-                                        text = item.fecha,
-                                        fontSize = 13.sp,
-                                        color = Color.Gray
-                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(text = item.nombre_med, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = if (item.estado != "Pendiente") iconColor else Color.Black)
+                                        Text(text = "${item.estado} - ${item.fecha_hora_programada}", fontSize = 13.sp, color = if (item.estado != "Pendiente") iconColor.copy(alpha = 0.7f) else Color.Gray)
+                                    }
                                 }
                             }
                         }
@@ -268,10 +335,7 @@ fun HomeScreen(
             }
 
             // ── Barra de navegación ──
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 0.dp
-            ) {
+            NavigationBar(containerColor = Color.White, tonalElevation = 0.dp) {
                 val itemColors = NavigationBarItemDefaults.colors(
                     selectedIconColor = azul,
                     selectedTextColor = azul,
@@ -279,10 +343,9 @@ fun HomeScreen(
                     unselectedTextColor = Color.Gray,
                     indicatorColor = Color.White
                 )
-
                 NavigationBarItem(
                     selected = true,
-                    onClick = { },
+                    onClick = onIrAHome,
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.home),
@@ -293,7 +356,6 @@ fun HomeScreen(
                     label = { Text("Inicio", fontWeight = FontWeight.Bold) },
                     colors = itemColors
                 )
-
                 NavigationBarItem(
                     selected = false,
                     onClick = onIrAEnfermedades,
@@ -307,7 +369,6 @@ fun HomeScreen(
                     label = { Text("Enfermedades", fontWeight = FontWeight.Bold) },
                     colors = itemColors
                 )
-
                 NavigationBarItem(
                     selected = false,
                     onClick = onIrAMedicamentos,
@@ -324,7 +385,7 @@ fun HomeScreen(
             }
         }
 
-        // ── Menú agregar ──
+        // ── Menú expandido ──
         AnimatedVisibility(
             visible = menuExpandido,
             modifier = Modifier
@@ -337,12 +398,11 @@ fun HomeScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.width(220.dp)) {
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                onAgregarEnfermedad()
+                                onIrARegistrarEnfermedad()
                                 menuExpandido = false
                             }
                             .padding(16.dp),
@@ -355,19 +415,16 @@ fun HomeScreen(
                             tint = Color.Unspecified
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Agregar Enfermedad",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text(text = "Agregar Enfermedad", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     }
-
                     HorizontalDivider(color = Color(0xFFE0E0E0))
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { menuExpandido = false }
+                            .clickable {
+                                onIrARegistrarMedicamento()
+                                menuExpandido = false
+                            }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -378,11 +435,7 @@ fun HomeScreen(
                             tint = Color.Unspecified
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Agregar Medicamento",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text(text = "Agregar Medicamento", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }

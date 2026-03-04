@@ -1,4 +1,4 @@
-package com.example.medicare.ui.enfermedades
+package com.example.medicare.ui.medicamentos
 
 import android.content.Intent
 import android.os.Bundle
@@ -27,16 +27,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.example.medicare.MedicareApp
 import com.example.medicare.R
-import com.example.medicare.data.local.entity.Enfermedad
+import com.example.medicare.data.local.entity.Medicamento
 import com.example.medicare.ui.perfil.PerfilActivity
 import com.example.medicare.ui.home.HomeActivity
-import com.example.medicare.ui.medicamentos.MedicamentosActivity
-import com.example.medicare.ui.medicamentos.RegistrarMedicamentoActivity
+import com.example.medicare.ui.enfermedades.EnfermedadesActivity
+import com.example.medicare.ui.enfermedades.RegistrarEnfermedadActivity
 import com.example.medicare.ui.theme.MediCareTheme
 
-class EnfermedadesActivity : ComponentActivity() {
+class MedicamentosActivity : ComponentActivity() {
 
-    private lateinit var viewModel: EnfermedadViewModel
+    private lateinit var viewModel: MedicamentoViewModel
     private var idUsuarioRecibido: Int = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,8 +47,8 @@ class EnfermedadesActivity : ComponentActivity() {
         val app = application as MedicareApp
         viewModel = ViewModelProvider(
             this,
-            EnfermedadViewModelFactory(app.database.enfermedadDao(), app.database.usuarioDao())
-        )[EnfermedadViewModel::class.java]
+            MedicamentoViewModelFactory(app.database.medicamentoDao(), app.database.usuarioDao())
+        )[MedicamentoViewModel::class.java]
 
         viewModel.cargarUsuario(idUsuarioRecibido)
 
@@ -58,7 +58,7 @@ class EnfermedadesActivity : ComponentActivity() {
                 val nombreUsuario = usuario?.nombre ?: "Usuario"
                 val correoUsuario = usuario?.correo ?: ""
 
-                EnfermedadesScreen(
+                MedicamentosScreen(
                     viewModel = viewModel,
                     nombreUsuario = nombreUsuario,
                     correoUsuario = correoUsuario,
@@ -71,28 +71,28 @@ class EnfermedadesActivity : ComponentActivity() {
                         startActivity(intent)
                         finish()
                     },
+                    onIrAEnfermedades = {
+                        val intent = Intent(this, EnfermedadesActivity::class.java).apply {
+                            putExtra("ID_USUARIO", idUsuarioRecibido)
+                        }
+                        startActivity(intent)
+                        finish()
+                    },
                     onAgregarEnfermedad = {
                         val intent = Intent(this, RegistrarEnfermedadActivity::class.java).apply {
                             putExtra("ID_USUARIO", idUsuarioRecibido)
                         }
                         startActivity(intent)
                     },
-                    onEditarEnfermedad = { id ->
-                        val intent = Intent(this, RegistrarEnfermedadActivity::class.java).apply {
-                            putExtra("ENFERMEDAD_ID", id)
-                            putExtra("ID_USUARIO", idUsuarioRecibido)
-                        }
-                        startActivity(intent)
-                    },
-                    onIrAMedicamentos = {
-                        val intent = Intent(this, MedicamentosActivity::class.java).apply {
-                            putExtra("ID_USUARIO", idUsuarioRecibido)
-                        }
-                        startActivity(intent)
-                        finish()
-                    },
                     onAgregarMedicamento = {
                         val intent = Intent(this, RegistrarMedicamentoActivity::class.java).apply {
+                            putExtra("ID_USUARIO", idUsuarioRecibido)
+                        }
+                        startActivity(intent)
+                    },
+                    onEditarMedicamento = { id ->
+                        val intent = Intent(this, RegistrarMedicamentoActivity::class.java).apply {
+                            putExtra("MEDICAMENTO_ID", id)
                             putExtra("ID_USUARIO", idUsuarioRecibido)
                         }
                         startActivity(intent)
@@ -105,22 +105,22 @@ class EnfermedadesActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.cargarEnfermedades(idUsuarioRecibido)
+        viewModel.cargarMedicamentos(idUsuarioRecibido)
         viewModel.cargarUsuario(idUsuarioRecibido)
     }
 }
 
 @Composable
-fun EnfermedadesScreen(
-    viewModel: EnfermedadViewModel,
+fun MedicamentosScreen(
+    viewModel: MedicamentoViewModel,
     nombreUsuario: String,
     correoUsuario: String,
     idUsuario: Int,
     onIrAHome: () -> Unit,
+    onIrAEnfermedades: () -> Unit,
     onAgregarEnfermedad: () -> Unit,
-    onEditarEnfermedad: (Int) -> Unit,
-    onIrAMedicamentos: () -> Unit,
     onAgregarMedicamento: () -> Unit,
+    onEditarMedicamento: (Int) -> Unit,
     onRegresar: () -> Unit
 ) {
     val azul = Color(0xFF0086FF)
@@ -128,13 +128,12 @@ fun EnfermedadesScreen(
     val context = LocalContext.current
 
     var menuExpandido by remember { mutableStateOf(false) }
-    val enfermedades by viewModel.enfermedades.collectAsState()
+    val medicamentos by viewModel.medicamentos.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.cargarEnfermedades(idUsuario)
+        viewModel.cargarMedicamentos(idUsuario)
     }
 
-    // Calcular iniciales
     val iniciales = nombreUsuario
         .split(" ")
         .filter { it.isNotEmpty() }
@@ -147,7 +146,6 @@ fun EnfermedadesScreen(
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-
         Column(modifier = Modifier.fillMaxSize()) {
 
             // ── Encabezado azul ──
@@ -155,13 +153,8 @@ fun EnfermedadesScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(azulClaro, azul)
-                        ),
-                        shape = RoundedCornerShape(
-                            bottomStart = 40.dp,
-                            bottomEnd = 40.dp
-                        )
+                        brush = Brush.verticalGradient(colors = listOf(azulClaro, azul)),
+                        shape = RoundedCornerShape(bottomStart = 40.dp, bottomEnd = 40.dp)
                     )
                     .padding(top = 60.dp, bottom = 40.dp, start = 24.dp, end = 24.dp)
             ) {
@@ -172,13 +165,13 @@ fun EnfermedadesScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Enfermedades",
+                            text = "Medicamentos",
                             fontSize = 30.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
                         Text(
-                            text = "${enfermedades.size} Enfermedades registradas",
+                            text = "${medicamentos.size} Medicamentos registrados",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
@@ -189,10 +182,7 @@ fun EnfermedadesScreen(
                     Box(
                         modifier = Modifier
                             .size(50.dp)
-                            .background(
-                                color = Color.White.copy(alpha = 0.3f),
-                                shape = CircleShape
-                            )
+                            .background(color = Color.White.copy(alpha = 0.3f), shape = CircleShape)
                             .border(2.dp, Color.White, CircleShape)
                             .clickable {
                                 val intent = Intent(context, PerfilActivity::class.java).apply {
@@ -215,7 +205,7 @@ fun EnfermedadesScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // ── Lista o mensaje vacío ──
-            if (enfermedades.isEmpty()) {
+            if (medicamentos.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -224,14 +214,14 @@ fun EnfermedadesScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
-                            painter = painterResource(id = R.drawable.emfermedad),
+                            painter = painterResource(id = R.drawable.medicamento),
                             contentDescription = null,
                             modifier = Modifier.size(100.dp),
                             tint = Color.Unspecified
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Sin enfermedades registradas",
+                            text = "Sin medicamentos registrados",
                             fontSize = 18.sp,
                             color = Color.Gray,
                             fontWeight = FontWeight.Medium
@@ -246,24 +236,19 @@ fun EnfermedadesScreen(
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
-                    items(enfermedades) { enfermedad ->
-                        EnfermedadCard(
-                            enfermedad = enfermedad,
-                            onEditar = { onEditarEnfermedad(enfermedad.idEnfermedad) },
-                            onEliminar = { viewModel.eliminarEnfermedad(enfermedad, idUsuario) }
+                    items(medicamentos) { medicamento ->
+                        MedicamentoCard(
+                            medicamento = medicamento,
+                            onEditar = { onEditarMedicamento(medicamento.idMedicamento) },
+                            onEliminar = { viewModel.eliminarMedicamento(medicamento, idUsuario) }
                         )
                     }
                 }
             }
 
             // ── Barra de navegación ──
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 0.dp
-            ) {
-                val itemColors = NavigationBarItemDefaults.colors(
-                    indicatorColor = Color.White
-                )
+            NavigationBar(containerColor = Color.White, tonalElevation = 0.dp) {
+                val itemColors = NavigationBarItemDefaults.colors(indicatorColor = Color.White)
 
                 NavigationBarItem(
                     selected = false,
@@ -279,40 +264,32 @@ fun EnfermedadesScreen(
                     label = { Text("Inicio", color = Color.Gray) },
                     colors = itemColors
                 )
-
                 NavigationBarItem(
-                    selected = true,
-                    onClick = { },
+                    selected = false,
+                    onClick = onIrAEnfermedades,
                     icon = {
                         Icon(
                             painter = painterResource(R.drawable.emfermedad),
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
-                            tint = azul
+                            tint = Color.Gray
                         )
                     },
-                    label = {
-                        Text(
-                            text = "Enfermedades",
-                            color = azul,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    label = { Text("Enfermedades", color = Color.Gray) },
                     colors = itemColors
                 )
-
                 NavigationBarItem(
-                    selected = false,
-                    onClick = onIrAMedicamentos,
+                    selected = true,
+                    onClick = { },
                     icon = {
                         Icon(
                             painter = painterResource(R.drawable.medicamento),
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
-                            tint = Color.Gray
+                            tint = azul
                         )
                     },
-                    label = { Text("Medicamentos", color = Color.Gray) },
+                    label = { Text("Medicamentos", color = azul, fontWeight = FontWeight.Bold) },
                     colors = itemColors
                 )
             }
@@ -331,7 +308,6 @@ fun EnfermedadesScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.width(220.dp)) {
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -397,11 +373,18 @@ fun EnfermedadesScreen(
 }
 
 @Composable
-fun EnfermedadCard(
-    enfermedad: Enfermedad,
+fun MedicamentoCard(
+    medicamento: Medicamento,
     onEditar: () -> Unit,
     onEliminar: () -> Unit
 ) {
+    // Color del badge de estado
+    val (estadoColor, estadoFondo) = when (medicamento.estadoMedicamento) {
+        "Activo" -> Color(0xFF2E7D32) to Color(0xFFE8F5E9)
+        "Suspendido" -> Color(0xFFE65100) to Color(0xFFFFF3E0)
+        else -> Color(0xFF616161) to Color(0xFFF5F5F5) // Terminado
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -410,20 +393,41 @@ fun EnfermedadCard(
     ) {
         Column {
 
+            // ── Cabecera azul con nombre ──
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFE3F2FD))
-                    .padding(12.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Text(
-                    text = enfermedad.nombreEnfermedad,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF333333)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = medicamento.nombreMedicamento,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF333333)
+                    )
+                    // Badge de tipo
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFF0086FF), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = medicamento.tipoPresentacion,
+                            fontSize = 12.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
             }
 
+            // ── Cuerpo de la card ──
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -432,16 +436,30 @@ fun EnfermedadCard(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Fecha: ${enfermedad.fecha}",
+                            text = "Dosis: ${medicamento.dosis}",
                             fontSize = 14.sp,
                             color = Color.Gray
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Notas: ${enfermedad.notas}",
+                            text = "Categoría: ${medicamento.categoria}",
                             fontSize = 14.sp,
                             color = Color.DarkGray
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Badge de estado
+                        Box(
+                            modifier = Modifier
+                                .background(estadoFondo, RoundedCornerShape(20.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = medicamento.estadoMedicamento,
+                                fontSize = 12.sp,
+                                color = estadoColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                     Row {
                         IconButton(onClick = onEditar) {

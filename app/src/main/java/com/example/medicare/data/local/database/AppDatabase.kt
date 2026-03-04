@@ -27,7 +27,7 @@ import com.example.medicare.data.local.dao.HistorialTomaDao
         Programacion::class,
         HistorialToma::class
     ],
-    version = 2, // Se incrementó la versión a 2 por cambios en Enfermedad.kt
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -49,7 +49,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "medicare_database"
                 )
-                    .fallbackToDestructiveMigration() // Borra y recrea si hay cambios de versión
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

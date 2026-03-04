@@ -26,11 +26,14 @@ data class HistorialToma(
     val idProgramacionFk: Int,
 
     @ColumnInfo(name = "fecha_hora_programada")
+    // Cuando debio sonar
     val fechaHoraProgramada: String,
 
     @ColumnInfo(name = "fecha_hora_real")
+    // cando se tomo realmente (puede ser nulo tambien)
     val fechaHoraReal: String?,
 
     @ColumnInfo(name = "estado")
+    // "Pendiente", "Tomado", "Omitido", "Pospuesto"
     val estado: String
 )

@@ -28,7 +28,7 @@ data class Enfermedad(
     @ColumnInfo(name = "nombre_enfermedad")
     val nombreEnfermedad: String,
 
-    @ColumnInfo(name = "fecha_diagnostico")
+    @ColumnInfo(name = "fecha")
     val fecha: String = "",
 
     @ColumnInfo(name = "notas")

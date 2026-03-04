@@ -29,8 +29,26 @@ data class Medicamento(
     val nombreMedicamento: String,
 
     @ColumnInfo(name = "tipo_presentacion")
-    val tipoPresentacion: String,
+    val tipoPresentacion: String, // Ej: Pastilla, Jarabe
 
     @ColumnInfo(name = "dosis")
-    val dosis: String
+    val dosis: String, // Ej: 1 tableta, 500mg
+
+    @ColumnInfo(name = "frecuencia")
+    val frecuencia: String, // Ej: cada 8h
+
+    @ColumnInfo(name = "primera_toma")
+    val primeraToma: String, // Ej: 10:30 AM
+
+    @ColumnInfo(name = "duracion")
+    val duracion: String, // Ej: 7 dias
+
+    @ColumnInfo(name = "contenido")
+    val contenido: String, // Ej: Caja con 30 tabletas
+
+    @ColumnInfo(name = "categoria")
+    val categoria: String, // "Pediátrico", "Infantil", "Adulto"
+
+    @ColumnInfo(name = "estado_medicamento")
+    val estadoMedicamento: String // "Activo", "Suspendido", "Terminado"
 )

@@ -49,12 +49,27 @@
         </activity>
 
         <activity
+            android:name=".ui.enfermedades.EnfermedadesActivity"
+            android:exported="false">
+        </activity>
+
+        <activity
             android:name=".ui.enfermedades.RegistrarEnfermedadActivity"
             android:exported="false">
         </activity>
 
         <activity
-            android:name=".ui.enfermedades.EnfermedadesActivity"
+            android:name=".ui.medicamentos.MedicamentosActivity"
+            android:exported="false">
+        </activity>
+
+        <activity
+            android:name=".ui.medicamentos.RegistrarMedicamentoActivity"
+            android:exported="false">
+        </activity>
+
+        <activity
+            android:name=".ui.perfil.PerfilActivity"
             android:exported="false">
         </activity>
 

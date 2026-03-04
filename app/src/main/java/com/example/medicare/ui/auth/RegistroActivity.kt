@@ -125,11 +125,7 @@ fun RegistroScreen(
                             placeholder = { Text("Juan Pérez") }, 
                             singleLine = true, 
                             modifier = Modifier.fillMaxWidth(), 
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black
-                            )
+                            shape = RoundedCornerShape(12.dp)
                         )
 
                         Spacer(modifier = Modifier.height(15.dp))
@@ -142,11 +138,7 @@ fun RegistroScreen(
                             placeholder = { Text("@gmail.com") }, 
                             singleLine = true, 
                             modifier = Modifier.fillMaxWidth(), 
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black
-                            )
+                            shape = RoundedCornerShape(12.dp)
                         )
 
                         Spacer(modifier = Modifier.height(15.dp))
@@ -165,11 +157,7 @@ fun RegistroScreen(
                                 } 
                             },
                             modifier = Modifier.fillMaxWidth(), 
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black
-                            )
+                            shape = RoundedCornerShape(12.dp)
                         )
 
                         // Muestra errores

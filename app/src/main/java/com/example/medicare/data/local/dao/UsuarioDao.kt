@@ -3,6 +3,7 @@ package com.example.medicare.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.example.medicare.data.local.entity.Usuario // Importamos la entidad que acabas de llenar
 
 @Dao
@@ -13,4 +14,9 @@ interface UsuarioDao {
 
     @Query("SELECT * FROM usuarios WHERE correo = :email AND password = :password LIMIT 1")
     suspend fun iniciarSesion(email: String, password: String): Usuario?
+    @Query("SELECT * FROM usuarios WHERE idUsuario = :id")
+    suspend fun obtenerUsuarioPorId(id: Int): Usuario?
+
+    @Update
+    suspend fun actualizarUsuario(usuario: Usuario)
 }
