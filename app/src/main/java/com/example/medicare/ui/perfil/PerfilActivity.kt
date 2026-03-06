@@ -1,6 +1,7 @@
 package com.example.medicare.ui.perfil
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -50,6 +51,16 @@ class PerfilActivity : ComponentActivity() {
 
         setContent {
             MediCareTheme {
+                val actualizado by viewModel.actualizado.collectAsState()
+
+                // Reaccionar al éxito del guardado
+                LaunchedEffect(actualizado) {
+                    if (actualizado) {
+                        Toast.makeText(this@PerfilActivity, "¡Cambios guardados!", Toast.LENGTH_SHORT).show()
+                        viewModel.resetActualizado() // Limpiar estado para poder editar de nuevo
+                    }
+                }
+
                 PerfilScreen(
                     viewModel = viewModel,
                     idUsuario = idUsuario,
@@ -77,8 +88,7 @@ fun PerfilScreen(
     val azulClaro = Color(0xFF66B2FF)
 
     val usuario by viewModel.usuario.collectAsState()
-    val actualizado by viewModel.actualizado.collectAsState()
-
+    
     var modoEditar by remember { mutableStateOf(false) }
     var acercaExpandido by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -87,18 +97,13 @@ fun PerfilScreen(
     var correoEdit by remember { mutableStateOf("") }
     var contrasenaEdit by remember { mutableStateOf("") }
 
-    // Cuando carga el usuario, llenamos los campos
+    // Sincronizar campos de edición con los datos del usuario
     LaunchedEffect(usuario) {
         usuario?.let {
             nombreEdit = it.nombre
             correoEdit = it.correo
             contrasenaEdit = it.contrasena
         }
-    }
-
-    // Cuando se actualiza, salimos del modo editar
-    LaunchedEffect(actualizado) {
-        if (actualizado) modoEditar = false
     }
 
     Column(
@@ -121,14 +126,13 @@ fun PerfilScreen(
                         bottomEnd = 40.dp
                     )
                 )
-                .padding(top = 40.dp, bottom = 40.dp, start = 16.dp, end = 24.dp)
+                .padding(top = 40.dp, bottom = 40.dp, start = 24.dp, end = 24.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 
-                // ── Botón Regresar ──
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Start
@@ -143,7 +147,6 @@ fun PerfilScreen(
                     }
                 }
 
-                // ── Avatar con iniciales ──
                 Box(
                     modifier = Modifier
                         .size(80.dp)
@@ -184,7 +187,7 @@ fun PerfilScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // ── Sección Mi información ──
+        // Mi información
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -229,13 +232,7 @@ fun PerfilScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (modoEditar) {
-
-                    // ── Modo edición ──
-                    Text(
-                        text = "Nombre completo",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                    Text(text = "Nombre completo", fontSize = 12.sp, color = Color.Gray)
                     OutlinedTextField(
                         value = nombreEdit,
                         onValueChange = { nombreEdit = it },
@@ -243,19 +240,16 @@ fun PerfilScreen(
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = azul,
                             focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = azul,
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "Correo electrónico",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                    Text(text = "Correo electrónico", fontSize = 12.sp, color = Color.Gray)
                     OutlinedTextField(
                         value = correoEdit,
                         onValueChange = { correoEdit = it },
@@ -263,35 +257,28 @@ fun PerfilScreen(
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = azul,
                             focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = azul,
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "Contraseña",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                    Text(text = "Contraseña", fontSize = 12.sp, color = Color.Gray)
                     OutlinedTextField(
                         value = contrasenaEdit,
                         onValueChange = { contrasenaEdit = it },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
-                        visualTransformation = if (passwordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (passwordVisible) R.drawable.invisible
-                                        else R.drawable.ojo
+                                        id = if (passwordVisible) R.drawable.invisible else R.drawable.ojo
                                     ),
                                     contentDescription = null,
                                     modifier = Modifier.size(22.dp)
@@ -299,9 +286,10 @@ fun PerfilScreen(
                             }
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = azul,
                             focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = azul,
+                            unfocusedBorderColor = Color.Gray
                         )
                     )
 
@@ -309,149 +297,64 @@ fun PerfilScreen(
 
                     Button(
                         onClick = {
-                            viewModel.actualizarUsuario(
-                                idUsuario,
-                                nombreEdit,
-                                correoEdit,
-                                contrasenaEdit
-                            )
+                            viewModel.actualizarUsuario(idUsuario, nombreEdit, correoEdit, contrasenaEdit)
+                            modoEditar = false // Salir del modo edición al presionar guardar
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = azul)
                     ) {
-                        Text(
-                            text = "Guardar cambios",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text(text = "Guardar cambios", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
 
                 } else {
-
-                    // ── Modo visualización ──
-                    InfoItem(
-                        icono = Icons.Default.Person,
-                        etiqueta = "Nombre completo",
-                        valor = usuario?.nombre ?: ""
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        color = Color(0xFFF0F0F0)
-                    )
-
-                    InfoItem(
-                        icono = Icons.Default.Email,
-                        etiqueta = "Correo electrónico",
-                        valor = usuario?.correo ?: ""
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        color = Color(0xFFF0F0F0)
-                    )
-
-                    InfoItem(
-                        icono = Icons.Default.Lock,
-                        etiqueta = "Contraseña",
-                        valor = "••••••••"
-                    )
+                    InfoItem(iconoRes = R.drawable.nombre, etiqueta = "Nombre completo", valor = usuario?.nombre ?: "")
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFF0F0F0) )
+                    InfoItem(iconoRes = R.drawable.correo, etiqueta = "Correo electrónico", valor = usuario?.correo ?: "")
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFF0F0F0))
+                    InfoItem(iconoRes = R.drawable.candado, etiqueta = "Contraseña", valor = "••••••••")
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ── Sección Acerca de MediCare ──
+        // ── Sección Acerca de ──
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             shape = RoundedCornerShape(20.dp),
             elevation = CardDefaults.cardElevation(4.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Acerca de MediCare",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF333333)
-                    )
+                    Text(text = "Acerca de MediCare", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333))
                     IconButton(onClick = { acercaExpandido = !acercaExpandido }) {
-                        Icon(
-                            imageVector = if (acercaExpandido)
-                                Icons.Default.KeyboardArrowUp
-                            else
-                                Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            tint = azul
-                        )
+                        Icon(imageVector = if (acercaExpandido) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = azul)
                     }
                 }
-
                 if (acercaExpandido) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "MediCare es una aplicación diseñada para ayudarte a gestionar tus medicamentos y enfermedades de manera organizada. Mantén un registro completo de tus tratamientos y recibe recordatorios.",
-                        fontSize = 14.sp,
-                        color = Color(0xFF666666),
-                        lineHeight = 22.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = null,
-                            tint = azul,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "soporte@medicare.com",
-                            fontSize = 13.sp,
-                            color = azul
-                        )
-                    }
+                    Text(text = "MediCare es una aplicación diseñada para ayudarte a gestionar tus medicamentos y enfermedades de manera organizada. Mantén un registro completo de tus tratamientos y recibe recordatorios.", fontSize = 14.sp, color = Color(0xFF666666), lineHeight = 22.sp)
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // ── Botón Cerrar Sesión ──
         Button(
             onClick = onCerrarSesion,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .height(52.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(52.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFFEBEB),
-                contentColor = Color(0xFFE53935)
-            )
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFEBEB), contentColor = Color(0xFFE53935))
         ) {
-            Icon(
-                imageVector = Icons.Default.ExitToApp,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
+            Icon(imageVector = Icons.Default.ExitToApp, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Cerrar Sesión",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = "Cerrar Sesión", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -459,38 +362,20 @@ fun PerfilScreen(
 }
 
 @Composable
-private fun InfoItem(
-    icono: ImageVector,
-    etiqueta: String,
-    valor: String
-) {
+private fun InfoItem(iconoRes: Int, etiqueta: String, valor: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(Color(0xFFE3F2FD), shape = CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.size(40.dp).background(Color(0xFFE3F2FD), shape = CircleShape), contentAlignment = Alignment.Center) {
             Icon(
-                imageVector = icono,
+                painter = painterResource(id = iconoRes),
                 contentDescription = null,
-                tint = Color(0xFF0086FF),
-                modifier = Modifier.size(20.dp)
+                tint = Color.Unspecified,
+                modifier = Modifier.size(24.dp)
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column {
-            Text(
-                text = etiqueta,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-            Text(
-                text = valor,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF333333)
-            )
+            Text(text = etiqueta, fontSize = 12.sp, color = Color.Gray)
+            Text(text = valor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF333333))
         }
     }
 }

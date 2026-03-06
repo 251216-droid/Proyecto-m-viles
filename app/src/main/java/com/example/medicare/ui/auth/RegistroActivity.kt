@@ -45,7 +45,6 @@ class RegistroActivity : ComponentActivity() {
                 RegistroScreen(
                     viewModel = viewModel,
                     onRegistroExitoso = {
-                        // Después de registrarse,va al Login para autenticarse
                         Toast.makeText(this, "Registro exitoso. Inicia sesión", Toast.LENGTH_SHORT).show()
                         startActivity(Intent(this, LoginActivity::class.java))
                         finish()
@@ -78,7 +77,6 @@ fun RegistroScreen(
         if (usuarioLogueado != null) onRegistroExitoso() 
     }
 
-    //  degradado
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -89,20 +87,17 @@ fun RegistroScreen(
             modifier = Modifier.fillMaxSize().padding(top = 70.dp), 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Títulos
             Text(text = "¡Bienvenido!",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White)
             Spacer(modifier = Modifier.height(15.dp))
-            //subtitulo
             Text(text ="\"Tu salud es lo primero\nDéjanos recordártelo\"",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Light,
                 color = Color.White)
             Spacer(modifier = Modifier.height(20.dp))
 
-            // card de registro
             AnimatedVisibility(visible = true, enter = fadeIn() + slideInVertically()) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).wrapContentHeight(), 
@@ -117,7 +112,6 @@ fun RegistroScreen(
                         Text(text = "Registrarse", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = azul)
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Nombre Completo
                         Text(text = "Nombre completo", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = azulClaro, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
                         OutlinedTextField(
                             value = nombre, 
@@ -125,12 +119,17 @@ fun RegistroScreen(
                             placeholder = { Text("Juan Pérez") }, 
                             singleLine = true, 
                             modifier = Modifier.fillMaxWidth(), 
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = azul,
+                                unfocusedBorderColor = Color.Gray
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(15.dp))
                         
-                        //Correo Electrónico
                         Text(text = "Correo electrónico", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = azulClaro, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
                         OutlinedTextField(
                             value = correo, 
@@ -138,12 +137,17 @@ fun RegistroScreen(
                             placeholder = { Text("@gmail.com") }, 
                             singleLine = true, 
                             modifier = Modifier.fillMaxWidth(), 
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = azul,
+                                unfocusedBorderColor = Color.Gray
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(15.dp))
                         
-                        // Contraseña
                         Text(text = "Contraseña", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = azulClaro, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
                         OutlinedTextField(
                             value = contrasena, 
@@ -157,17 +161,21 @@ fun RegistroScreen(
                                 } 
                             },
                             modifier = Modifier.fillMaxWidth(), 
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = azul,
+                                unfocusedBorderColor = Color.Gray
+                            )
                         )
 
-                        // Muestra errores
                         if (!mensajeError.isNullOrBlank()) { 
                             Text(text = mensajeError!!, color = Color.Red, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp)) 
                         }
 
                         Spacer(modifier = Modifier.height(25.dp))
                         
-                        // Botón  registrarse
                         Button(
                             onClick = { viewModel.registrarUsuario(nombre, correo, contrasena) }, 
                             modifier = Modifier.fillMaxWidth().height(55.dp), 

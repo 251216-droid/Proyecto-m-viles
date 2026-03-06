@@ -5,11 +5,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.medicare.data.local.dao.UsuarioDao
 import com.example.medicare.data.local.entity.Usuario
+import com.example.medicare.ui.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class PerfilViewModel(private val usuarioDao: UsuarioDao) : ViewModel() {
 
@@ -27,16 +27,35 @@ class PerfilViewModel(private val usuarioDao: UsuarioDao) : ViewModel() {
 
     fun actualizarUsuario(id: Int, nombre: String, correo: String, contrasena: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val actualizado = Usuario(
+            // 1. Actualizar en la Base de Datos Local (Room)
+            val usuarioActualizado = Usuario(
                 idUsuario = id,
                 nombre = nombre,
                 correo = correo,
                 contrasena = contrasena
             )
-            usuarioDao.actualizarUsuario(actualizado)
-            _usuario.value = actualizado
+            usuarioDao.actualizarUsuario(usuarioActualizado)
+
+            // 2. Sincronizar con la API de Node.js
+            try {
+                val datos = mapOf(
+                    "id" to id.toString(),
+                    "nombre" to nombre,
+                    "correo" to correo,
+                    "pass" to contrasena
+                )
+                
+                RetrofitClient.instance.actualizarPerfil(datos)
+            } catch (e: Exception) {
+            }
+
+            _usuario.value = usuarioActualizado
             _actualizado.value = true
         }
+    }
+
+    fun resetActualizado() {
+        _actualizado.value = false
     }
 }
 

@@ -37,14 +37,23 @@ class RegistrarEnfermedadActivity : ComponentActivity() {
         val app = application as MedicareApp
         val viewModel = ViewModelProvider(
             this,
-            EnfermedadViewModelFactory(app.database.enfermedadDao())
+            EnfermedadViewModelFactory(app.database.enfermedadDao(), app.database.usuarioDao())
         )[EnfermedadViewModel::class.java]
 
         val enfermedadId = intent.getIntExtra("ENFERMEDAD_ID", -1)
+        val idUsuario = intent.getIntExtra("ID_USUARIO", 1)
 
         setContent {
             MediCareTheme {
                 var enfermedadAEditar by remember { mutableStateOf<Enfermedad?>(null) }
+                val operacionExitosa by viewModel.operacionExitosa.collectAsState()
+
+                LaunchedEffect(operacionExitosa) {
+                    if (operacionExitosa) {
+                        viewModel.resetEstado()
+                        finish()
+                    }
+                }
 
                 LaunchedEffect(enfermedadId) {
                     if (enfermedadId != -1) {
@@ -57,18 +66,19 @@ class RegistrarEnfermedadActivity : ComponentActivity() {
                     onCancelar = { finish() },
                     onGuardar = { nombre, fecha, notas ->
                         if (enfermedadId == -1) {
-                            viewModel.guardarEnfermedad(nombre, fecha, notas, 1)
+                            // NUEVA ENFERMEDAD
+                            viewModel.guardarEnfermedad(nombre, fecha, notas, idUsuario)
                         } else {
+                            // ACTUALIZAR EXISTENTE (Aquí estaba el error)
                             val actualizada = Enfermedad(
                                 idEnfermedad = enfermedadId,
                                 nombreEnfermedad = nombre,
                                 fecha = fecha,
                                 notas = notas,
-                                idUsuarioFk = 1
+                                idUsuarioFk = idUsuario
                             )
-                            viewModel.actualizarEnfermedad(actualizada, 1)
+                            viewModel.actualizarEnfermedad(actualizada, idUsuario)
                         }
-                        finish()
                     }
                 )
             }
@@ -102,7 +112,6 @@ fun RegistrarEnfermedadScreen(
 
         Column {
 
-            // ── Encabezado azul ──
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,7 +164,6 @@ fun RegistrarEnfermedadScreen(
                 }
             }
 
-            // ── Tarjeta del formulario ──
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,7 +179,6 @@ fun RegistrarEnfermedadScreen(
                         .verticalScroll(rememberScrollState())
                 ) {
 
-                    // ── Nombre ──
                     Label("Nombre de la enfermedad:")
                     OutlinedTextField(
                         value = nombre,
@@ -190,7 +197,6 @@ fun RegistrarEnfermedadScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // ── Fecha con calendario ──
                     Label("Fecha de diagnóstico:")
                     Box(
                         modifier = Modifier
@@ -235,7 +241,6 @@ fun RegistrarEnfermedadScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // ── Notas ──
                     Label("Notas adicionales:")
                     OutlinedTextField(
                         value = notas,
@@ -255,7 +260,6 @@ fun RegistrarEnfermedadScreen(
 
                     Spacer(modifier = Modifier.height(30.dp))
 
-                    // ── Botones ──
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)

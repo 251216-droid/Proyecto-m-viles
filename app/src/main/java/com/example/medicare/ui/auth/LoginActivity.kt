@@ -42,16 +42,17 @@ class LoginActivity : ComponentActivity() {
 
         setContent {
             MediCareTheme {
-                // Llamada el Login
                 LoginScreen(
                     viewModel = viewModel,
                     onLoginExitoso = {
                         val usuario = viewModel.usuarioLogueado.value
                         val intent = Intent(this, HomeActivity::class.java).apply {
+                            putExtra("ID_USUARIO", usuario?.idUsuario ?: 1)
                             putExtra("NOMBRE_USUARIO", usuario?.nombre ?: "Usuario")
+                            putExtra("CORREO_USUARIO", usuario?.correo ?: "")
                         }
                         startActivity(intent)
-                        finish() // Cierra el login
+                        finish()
                     },
                     onIrARegistro = {
                         startActivity(Intent(this, RegistroActivity::class.java))
@@ -62,18 +63,15 @@ class LoginActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel,
     onLoginExitoso: () -> Unit,
     onIrARegistro: () -> Unit
 ) {
-    // Colores  de MediCare
     val azul = Color(0xFF0086FF)
     val azulClaro = Color(0xFF66B2FF)
     
-    //  texto ingresado y la visibilidad de la contraseña
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -85,7 +83,6 @@ fun LoginScreen(
         if (usuarioLogueado != null) onLoginExitoso()
     }
 
-    //  fondo principal degradado azul
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -98,7 +95,6 @@ fun LoginScreen(
                 .padding(top = 70.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Títulos bienvenida
             Text(
                 text = "¡Bienvenido!",
                 fontSize = 36.sp,
@@ -107,7 +103,6 @@ fun LoginScreen(
             )
             
             Spacer(modifier = Modifier.height(15.dp))
-            //subtitulo despues de  bienvenida
             Text(
                 text = "\"Tu salud es lo primero\nDéjanos recordártelo\"",
                 fontSize = 19.sp,
@@ -121,7 +116,6 @@ fun LoginScreen(
                 visible = true,
                 enter = fadeIn() + slideInVertically()
             ) {
-                // contenedor del blanco de login
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -146,7 +140,6 @@ fun LoginScreen(
                         
                         Spacer(modifier = Modifier.height(30.dp))
                         
-                        // correo electrónico
                         Text(
                             text = "Correo electrónico",
                             fontSize = 16.sp,
@@ -163,12 +156,17 @@ fun LoginScreen(
                             placeholder = { Text("@gmail.com") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = azul,
+                                unfocusedBorderColor = Color.Gray
+                            )
                         )
                         
                         Spacer(modifier = Modifier.height(20.dp))
                         
-                        //  contraseña
                         Text(
                             text = "Contraseña",
                             fontSize = 16.sp,
@@ -184,7 +182,6 @@ fun LoginScreen(
                             onValueChange = { contrasena = it },
                             placeholder = { Text("**********") },
                             singleLine = true,
-                            // texto visible y oculto
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
                                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -198,10 +195,15 @@ fun LoginScreen(
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = azul,
+                                unfocusedBorderColor = Color.Gray
+                            )
                         )
 
-                        // mensaje de error si las credenciales son incorrectas
                         if (!mensajeError.isNullOrBlank()) {
                             Text(
                                 text = mensajeError!!,
@@ -213,7 +215,6 @@ fun LoginScreen(
                         
                         Spacer(modifier = Modifier.height(30.dp))
                         
-                        // Botón inicio de sesión
                         Button(
                             onClick = { viewModel.iniciarSesion(correo, contrasena) },
                             modifier = Modifier
@@ -232,7 +233,6 @@ fun LoginScreen(
                         
                         Spacer(modifier = Modifier.height(20.dp))
                         
-                        // ir al Registro
                         Row {
                             Text(
                                 text = "¿No tienes cuenta? ",
